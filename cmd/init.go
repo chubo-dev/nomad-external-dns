@@ -110,6 +110,15 @@ func initProvider(ko *koanf.Koanf) (DNSProvider, error) {
 	)
 
 	switch ko.MustString("dns.provider") {
+	case "hetzner":
+		token := strings.TrimSpace(ko.String("provider.hetzner.token"))
+		if token == "" {
+			token = hetznerCloudTokenFromConfig()
+		}
+		provider, err = newHetznerCloudProvider(token)
+		if err != nil {
+			return nil, err
+		}
 	case "route53":
 		provider, err = route53.NewProvider(context.Background(), route53.Opt{
 			MaxRetries: ko.Int("provider.route53.max_retries"),

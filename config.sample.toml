@@ -10,6 +10,9 @@ provider = "route53"
 domain_filters = ["test.internal"]
 owner_uuid = "0af79bd2-f7e5-4231-bc6a-b492aac6ffbe" # This key is used to identify the records created by this tool. Records without this key will be ignored.
 
+[provider.hetzner]
+token = "" # Optional. Prefer HCLOUD_TOKEN in production.
+
 [provider.route53]
 region = "ap-south-1"
 max_retries = 5

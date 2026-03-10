@@ -9,6 +9,7 @@ Nomad 1.3+ [bundles support](https://www.hashicorp.com/blog/nomad-1-3-adds-nativ
 
 ## Supported Providers
 
+* [Hetzner Cloud DNS](https://docs.hetzner.cloud/reference/cloud#zones)
 * [AWS Route 53](https://aws.amazon.com/route53/)
 * [CloudFlare](https://www.cloudflare.com/dns) - _Coming Soon!_
 
@@ -40,7 +41,7 @@ You can choose one of the various deployment options:
 
 ### Binary
 
-Grab the latest release from [Releases](https://github.com/mr-karan/nomad-external-dns/releases).
+Grab the latest release from [Releases](https://github.com/chubo-dev/nomad-external-dns/releases).
 
 To run:
 
@@ -65,6 +66,13 @@ All config variables can also be populated as env vairables by prefixing `NOMAD_
 For eg: `app.update_interval` becomes `NOMAD_EXTERNAL_DNS_app__update_interval`.
 
 For configuring Nomad API client, [these environment variables](https://www.nomadproject.io/docs/runtime/environment) can be set.
+
+Hetzner Cloud DNS notes:
+
+- DNS now lives in the Hetzner Cloud API.
+- Set `dns.provider = "hetzner"` and either:
+  - `provider.hetzner.token`
+  - or `HCLOUD_TOKEN`
 
 ## Contribution
 

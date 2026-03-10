@@ -21,11 +21,12 @@ job "nomad-external-dns" {
       driver = "raw_exec"
 
       artifact {
-        source = "https://github.com/mr-karan/nomad-external-dns/releases/download/v0.1.3/nomad-external-dns_0.1.3_linux_amd64.tar.gz"
+        source = "https://github.com/chubo-dev/nomad-external-dns/releases/download/v0.1.0/nomad-external-dns_v0.1.0_linux_amd64.tar.gz"
       }
 
       env {
         NOMAD_TOKEN           = "xxx"
+        HCLOUD_TOKEN          = "yyy"
         AWS_ACCESS_KEY_ID     = "yyy"
         AWS_SECRET_ACCESS_KEY = "zzz"
       }
@@ -51,3 +52,4 @@ job "nomad-external-dns" {
 
 - If ACL is enabled, then you must generate and provide a `NOMAD_TOKEN` variable.
 - The service must be able to access the Nomad Cluster API. You can configure other Nomad variables using `env` stanza.
+- For Hetzner Cloud DNS, also provide `HCLOUD_TOKEN` or `NOMAD_EXTERNAL_DNS_provider__hetzner__token`.
