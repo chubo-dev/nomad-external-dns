@@ -12,10 +12,11 @@ import (
 // This is used to send to upstream DNS providers.
 func (s *ServiceMeta) ToRecord(domains []string, owner string) (RecordMeta, error) {
 	var (
-		host string
-		zone string
-		ttl  = DefaultTTL // Set default TTL
-		err  error
+		host    string
+		zone    string
+		ttl     = DefaultTTL // Set default TTL
+		targets []string
+		err     error
 	)
 
 	if len(s.Tags) == 0 {
@@ -23,19 +24,23 @@ func (s *ServiceMeta) ToRecord(domains []string, owner string) (RecordMeta, erro
 	}
 
 	// Parse the hostname and TTL from tags.
-	host, zone, ttl, err = s.parseTags(domains)
+	host, zone, ttl, targets, err = s.parseTags(domains)
 	if err != nil {
 		return RecordMeta{}, err
 	}
 
 	zone = EnsureFQDN(zone)
 
-	record := prepareRecord(s, host, zone, ttl, owner)
+	record, err := prepareRecord(s, host, zone, ttl, owner, targets)
+	if err != nil {
+		return RecordMeta{}, err
+	}
 	return record, nil
 }
 
 // parseTags parses service tags to extract hostname, zone and ttl.
-func (s *ServiceMeta) parseTags(domains []string) (host, zone string, ttl time.Duration, err error) {
+func (s *ServiceMeta) parseTags(domains []string) (host, zone string, ttl time.Duration, targets []string, err error) {
+	ttl = DefaultTTL
 	for _, tag := range s.Tags {
 		if strings.HasPrefix(tag, HostnameAnnotationKey) {
 			host, zone, err = parseHost(tag, domains)
@@ -46,6 +51,11 @@ func (s *ServiceMeta) parseTags(domains []string) (host, zone string, ttl time.D
 			ttl, err = parseTTL(tag)
 			if err != nil {
 				ttl = DefaultTTL
+			}
+		} else if strings.HasPrefix(tag, TargetAnnotationKey) {
+			targets, err = parseTargets(tag)
+			if err != nil {
+				return
 			}
 		}
 	}
@@ -83,15 +93,43 @@ func parseTTL(tag string) (ttl time.Duration, err error) {
 	return ttl, nil
 }
 
-func prepareRecord(s *ServiceMeta, host, zone string, ttl time.Duration, owner string) RecordMeta {
-	// Generate comma-separated list of addresses
-	addresses := strings.Join(s.Addresses, ",")
+func parseTargets(tag string) ([]string, error) {
+	split := strings.Split(tag, TargetAnnotationKey+"=")
+	if len(split) != 2 {
+		return nil, fmt.Errorf("error splitting tag %s: expected 2 elements, got %d", tag, len(split))
+	}
 
-	// Create an A record with all addresses
-	aRecord := libdns.Record{
-		Type:  "A",
+	parts := strings.Split(split[1], ",")
+	targets := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			targets = append(targets, part)
+		}
+	}
+
+	if len(targets) == 0 {
+		return nil, fmt.Errorf("external-dns target annotation cannot be empty")
+	}
+
+	return targets, nil
+}
+
+func prepareRecord(s *ServiceMeta, host, zone string, ttl time.Duration, owner string, targets []string) (RecordMeta, error) {
+	recordType, effectiveTargets, err := classifyTargets(targets)
+	if err != nil {
+		return RecordMeta{}, err
+	}
+
+	if len(effectiveTargets) == 0 {
+		effectiveTargets = s.Addresses
+		recordType = "A"
+	}
+
+	record := libdns.Record{
+		Type:  recordType,
 		Name:  host,
-		Value: addresses,
+		Value: strings.Join(effectiveTargets, ","),
 		TTL:   ttl,
 	}
 
@@ -107,10 +145,10 @@ func prepareRecord(s *ServiceMeta, host, zone string, ttl time.Duration, owner s
 	}
 
 	// Combine the A and TXT records
-	records := []libdns.Record{aRecord, txtRecord}
+	records := []libdns.Record{record, txtRecord}
 
 	return RecordMeta{
 		Zone:    zone,
 		Records: records,
-	}
+	}, nil
 }

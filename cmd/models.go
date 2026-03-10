@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/libdns/libdns"
@@ -11,6 +14,8 @@ const (
 	HostnameAnnotationKey = "external-dns/hostname"
 	// TTLAnnotationKey is the annotated tag for defining TTL.
 	TTLAnnotationKey = "external-dns/ttl"
+	// TargetAnnotationKey overrides the discovered service addresses.
+	TargetAnnotationKey = "external-dns/target"
 	// DefaultTTL is the TTL to set for records if unspecified or unparseable.
 	DefaultTTL = time.Second * 30
 )
@@ -38,4 +43,39 @@ type DNSProvider interface {
 type RecordMeta struct {
 	Records []libdns.Record
 	Zone    string
+}
+
+func classifyTargets(targets []string) (string, []string, error) {
+	if len(targets) == 0 {
+		return "A", nil, nil
+	}
+
+	cleaned := make([]string, 0, len(targets))
+	allIPs := true
+
+	for _, target := range targets {
+		target = strings.TrimSpace(target)
+		if target == "" {
+			continue
+		}
+
+		cleaned = append(cleaned, target)
+		if net.ParseIP(target) == nil {
+			allIPs = false
+		}
+	}
+
+	if len(cleaned) == 0 {
+		return "A", nil, nil
+	}
+
+	if allIPs {
+		return "A", cleaned, nil
+	}
+
+	if len(cleaned) == 1 {
+		return "CNAME", cleaned, nil
+	}
+
+	return "", nil, fmt.Errorf("non-IP external-dns targets must contain exactly one value")
 }

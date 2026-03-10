@@ -53,3 +53,6 @@ job "nomad-external-dns" {
 - If ACL is enabled, then you must generate and provide a `NOMAD_TOKEN` variable.
 - The service must be able to access the Nomad Cluster API. You can configure other Nomad variables using `env` stanza.
 - For Hetzner Cloud DNS, also provide `HCLOUD_TOKEN` or `NOMAD_EXTERNAL_DNS_provider__hetzner__token`.
+- `external-dns/target=<ip-or-hostname>` can be used when the DNS record should point somewhere other than the service's Nomad-registered address, for example a public ingress load balancer.
+- For Chubo/OpenWonton lanes affected by the current artifact-download linker issue, prefer the container image path instead of `raw_exec`:
+  `ghcr.io/chubo-dev/nomad-external-dns:v0.1.1`.

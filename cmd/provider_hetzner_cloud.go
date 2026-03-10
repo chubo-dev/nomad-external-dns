@@ -21,6 +21,7 @@ const (
 	defaultHetznerCloudAPIEndpoint   = "https://api.hetzner.cloud/v1"
 	defaultHetznerCloudPollInterval  = 500 * time.Millisecond
 	defaultHetznerCloudActionTimeout = 30 * time.Second
+	defaultHetznerCloudMinTTLSeconds = 60
 )
 
 type hetznerCloudProvider struct {
@@ -463,6 +464,9 @@ func durationToTTL(ttl time.Duration) *int {
 	seconds := int(ttl.Seconds())
 	if seconds <= 0 {
 		seconds = int(DefaultTTL.Seconds())
+	}
+	if seconds < defaultHetznerCloudMinTTLSeconds {
+		seconds = defaultHetznerCloudMinTTLSeconds
 	}
 	return &seconds
 }

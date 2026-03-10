@@ -47,6 +47,71 @@ func TestToRecord(t *testing.T) {
 			},
 		},
 		{
+			name: "target override with lb ip",
+			service: &ServiceMeta{
+				Name:      "hello",
+				Namespace: "default",
+				Job:       "hello-job",
+				Addresses: []string{"10.0.0.10"},
+				Tags: []string{
+					"external-dns/hostname=hello.test.internal",
+					"external-dns/ttl=30s",
+					"external-dns/target=95.217.171.236",
+				},
+			},
+			domains: []string{"test.internal"},
+			owner:   "test-owner",
+			want: RecordMeta{
+				Zone: "test.internal.",
+				Records: []libdns.Record{
+					{
+						Type:  "A",
+						Name:  "hello",
+						Value: "95.217.171.236",
+						TTL:   30 * time.Second,
+					},
+					{
+						Type:  "TXT",
+						Name:  "hello",
+						Value: "service=hello namespace=default owner=test-owner created-by=nomad-external-dns",
+						TTL:   30 * time.Second,
+					},
+				},
+			},
+		},
+		{
+			name: "target override with cname",
+			service: &ServiceMeta{
+				Name:      "hello",
+				Namespace: "default",
+				Job:       "hello-job",
+				Addresses: []string{"10.0.0.10"},
+				Tags: []string{
+					"external-dns/hostname=hello.test.internal",
+					"external-dns/target=api.test.internal",
+				},
+			},
+			domains: []string{"test.internal"},
+			owner:   "test-owner",
+			want: RecordMeta{
+				Zone: "test.internal.",
+				Records: []libdns.Record{
+					{
+						Type:  "CNAME",
+						Name:  "hello",
+						Value: "api.test.internal",
+						TTL:   30 * time.Second,
+					},
+					{
+						Type:  "TXT",
+						Name:  "hello",
+						Value: "service=hello namespace=default owner=test-owner created-by=nomad-external-dns",
+						TTL:   30 * time.Second,
+					},
+				},
+			},
+		},
+		{
 			name: "empty tags",
 			service: &ServiceMeta{
 				Name:      "redis",

@@ -48,6 +48,12 @@ func TestLibDNSRecordsFromHetznerRRSet(t *testing.T) {
 	require.Equal(t, "10.0.0.11", records[1].Value)
 }
 
+func TestDurationToTTLClampsHetznerMinimum(t *testing.T) {
+	ttl := durationToTTL(30 * time.Second)
+	require.NotNil(t, ttl)
+	require.Equal(t, defaultHetznerCloudMinTTLSeconds, *ttl)
+}
+
 func TestRelativeRRSetName(t *testing.T) {
 	require.Equal(t, "", relativeRRSetName("@", "wizerd.dev"))
 	require.Equal(t, "", relativeRRSetName("wizerd.dev", "wizerd.dev"))

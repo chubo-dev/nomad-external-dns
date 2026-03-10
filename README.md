@@ -24,13 +24,14 @@ Nomad 1.3+ [bundles support](https://www.hashicorp.com/blog/nomad-1-3-adds-nativ
       tags = [
         "external-dns/hostname=redis.test.internal",
         "external-dns/ttl=30s",
+        "external-dns/target=95.217.171.236",
       ]
       port = "db"
     }
 ```
 
 - At every `app.update_interval` frequency, list of all services across namespaces in the Nomad cluster are fetched.
-- For each service, `external-dns` prefix is used to determine properties like TTL, Hostname etc.
+- For each service, `external-dns` prefix is used to determine properties like TTL, Hostname and optional target override.
 - DNS record for this service is created with the registered DNS Provider. `nomad-external-dns` creates or updates an existing record automatically.
 
 ## Deploy
@@ -54,6 +55,14 @@ $ ./nomad-external-dns.bin --config config.toml
 Refer to the [jobspec](./docs/nomad.md#jobspec) for deploying in a Nomad cluster.
 
 If you're deploying on AWS, consider referring to the IAM policy mentioned [here](./docs/aws.md#iam-policy)
+
+### Container
+
+Preferred image path:
+
+```text
+ghcr.io/chubo-dev/nomad-external-dns:v0.1.1
+```
 
 ## Configuration
 
