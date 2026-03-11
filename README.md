@@ -2,10 +2,10 @@
 
 # nomad-external-dns
 
-_Synchronize Nomad Services with external DNS providers._
+_Synchronize Nomad and OpenGyoza catalog services with external DNS providers._
 
-Inspired by [kubernetes-sigs/external-dns](https://github.com/kubernetes-sigs/external-dns), `nomad-external-dns` makes Nomad Services discoverable via DNS servers.
-Nomad 1.3+ [bundles support](https://www.hashicorp.com/blog/nomad-1-3-adds-native-service-discovery-and-edge-workload-support) for native service discovery and `nomad-external-dns` helps to advertise the services inside this registry to external DNS providers.
+Inspired by [kubernetes-sigs/external-dns](https://github.com/kubernetes-sigs/external-dns), `nomad-external-dns` makes Nomad and OpenGyoza catalog services discoverable via DNS servers.
+Nomad 1.3+ [bundles support](https://www.hashicorp.com/blog/nomad-1-3-adds-native-service-discovery-and-edge-workload-support) for native service discovery and `nomad-external-dns` helps to advertise the tagged services inside these registries to external DNS providers.
 
 ## Supported Providers
 
@@ -30,7 +30,9 @@ Nomad 1.3+ [bundles support](https://www.hashicorp.com/blog/nomad-1-3-adds-nativ
     }
 ```
 
-- At every `app.update_interval` frequency, list of all services across namespaces in the Nomad cluster are fetched.
+- At every `app.update_interval` frequency, tagged services are fetched from:
+  - the Nomad Services API
+  - the OpenGyoza/Consul catalog API when `CONSUL_HTTP_ADDR` is configured
 - For each service, `external-dns` prefix is used to determine properties like TTL, Hostname and optional target override.
 - DNS record for this service is created with the registered DNS Provider. `nomad-external-dns` creates or updates an existing record automatically.
 
@@ -61,7 +63,7 @@ If you're deploying on AWS, consider referring to the IAM policy mentioned [here
 Preferred image path:
 
 ```text
-ghcr.io/chubo-dev/nomad-external-dns:v0.1.1
+ghcr.io/chubo-dev/nomad-external-dns:v0.1.3
 ```
 
 ## Configuration
@@ -75,6 +77,16 @@ All config variables can also be populated as env vairables by prefixing `NOMAD_
 For eg: `app.update_interval` becomes `NOMAD_EXTERNAL_DNS_app__update_interval`.
 
 For configuring Nomad API client, [these environment variables](https://www.nomadproject.io/docs/runtime/environment) can be set.
+
+For configuring OpenGyoza/Consul catalog discovery, standard Consul API environment
+variables can be set, for example:
+
+- `CONSUL_HTTP_ADDR`
+- `CONSUL_HTTP_TOKEN`
+- `CONSUL_CACERT`
+- `CONSUL_CLIENT_CERT`
+- `CONSUL_CLIENT_KEY`
+- `CONSUL_HTTP_SSL_VERIFY`
 
 Hetzner Cloud DNS notes:
 

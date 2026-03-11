@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	consulapi "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/nomad/api"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/toml"
@@ -91,6 +92,19 @@ func initNomadClient() (*api.Client, error) {
 	return client, nil
 }
 
+func initCatalogClient() (*consulapi.Client, error) {
+	if strings.TrimSpace(os.Getenv(consulapi.HTTPAddrEnvName)) == "" {
+		return nil, nil
+	}
+
+	client, err := consulapi.NewClient(consulapi.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
 func initOpts(ko *koanf.Koanf) Opts {
 	return Opts{
 		updateInterval: ko.MustDuration("app.update_interval"),
@@ -157,11 +171,22 @@ func initApp(ko *koanf.Koanf) (*App, error) {
 
 	logger.Info("Initialized Nomad client", "addr", client.Address())
 
+	catalogClient, err := initCatalogClient()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to initialize catalog API client: %w", err)
+	}
+	if catalogClient != nil {
+		logger.Info("Initialized catalog client", "addr", strings.TrimSpace(os.Getenv(consulapi.HTTPAddrEnvName)))
+	} else {
+		logger.Info("Catalog client disabled", "reason", "CONSUL_HTTP_ADDR is unset")
+	}
+
 	return &App{
-		lo:          logger,
-		opts:        opts,
-		services:    make(map[string]ServiceMeta, 0),
-		provider:    prov,
-		nomadClient: client,
+		lo:            logger,
+		opts:          opts,
+		services:      make(map[string]ServiceMeta, 0),
+		provider:      prov,
+		nomadClient:   client,
+		catalogClient: catalogClient,
 	}, nil
 }

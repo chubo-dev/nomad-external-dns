@@ -10,6 +10,11 @@ provider = "route53"
 domain_filters = ["test.internal"]
 owner_uuid = "0af79bd2-f7e5-4231-bc6a-b492aac6ffbe" # This key is used to identify the records created by this tool. Records without this key will be ignored.
 
+# Optional OpenGyoza/Consul catalog discovery is configured through the standard
+# Consul env vars:
+# CONSUL_HTTP_ADDR, CONSUL_HTTP_TOKEN, CONSUL_CACERT,
+# CONSUL_CLIENT_CERT, CONSUL_CLIENT_KEY, CONSUL_HTTP_SSL_VERIFY
+
 [provider.hetzner]
 token = "" # Optional. Prefer HCLOUD_TOKEN in production.
 

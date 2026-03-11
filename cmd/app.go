@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	consulapi "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/nomad/api"
 	"golang.org/x/exp/slog"
 )
@@ -23,11 +24,12 @@ type Opts struct {
 type App struct {
 	sync.RWMutex
 
-	lo          *slog.Logger
-	opts        Opts
-	provider    DNSProvider
-	nomadClient *api.Client
-	services    map[string]ServiceMeta
+	lo            *slog.Logger
+	opts          Opts
+	provider      DNSProvider
+	nomadClient   *api.Client
+	catalogClient *consulapi.Client
+	services      map[string]ServiceMeta
 }
 
 // Start initialises background workers and waits for them to exit on cancellation.
@@ -63,11 +65,11 @@ func (app *App) runWorker(ctx context.Context, wg *sync.WaitGroup, interval time
 	}()
 }
 
-// UpdateServices fetches Nomad services from all the namespaces
-// and updates the records in upstream DNS providers.
+// UpdateServices fetches service registrations from the supported discovery
+// backends and updates the records in upstream DNS providers.
 func (app *App) UpdateServices(ctx context.Context) {
 	// Fetch the list of services from the cluster.
-	services, err := app.fetchNomadServices()
+	services, err := app.fetchServices()
 	if err != nil {
 		app.lo.Error("Failed to fetch services", "error", err)
 		return

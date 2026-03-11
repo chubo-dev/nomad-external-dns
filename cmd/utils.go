@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	consulapi "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/nomad/api"
 )
 
@@ -58,6 +59,26 @@ func uniqueAddresses(svcRegistrations []*api.ServiceRegistration) []string {
 	for _, s := range svcRegistrations {
 		uniqueAddrs[s.Address] = struct{}{}
 	}
+	addr := make([]string, 0, len(uniqueAddrs))
+	for key := range uniqueAddrs {
+		addr = append(addr, key)
+	}
+	return addr
+}
+
+func uniqueCatalogAddresses(entries []*consulapi.CatalogService) []string {
+	uniqueAddrs := make(map[string]struct{})
+	for _, entry := range entries {
+		address := strings.TrimSpace(entry.ServiceAddress)
+		if address == "" {
+			address = strings.TrimSpace(entry.Address)
+		}
+		if address == "" {
+			continue
+		}
+		uniqueAddrs[address] = struct{}{}
+	}
+
 	addr := make([]string, 0, len(uniqueAddrs))
 	for key := range uniqueAddrs {
 		addr = append(addr, key)

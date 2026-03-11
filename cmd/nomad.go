@@ -6,6 +6,28 @@ import (
 	"github.com/hashicorp/nomad/api"
 )
 
+func (app *App) fetchServices() (map[string]ServiceMeta, error) {
+	services, err := app.fetchNomadServices()
+	if err != nil {
+		return nil, err
+	}
+
+	if app.catalogClient == nil {
+		return services, nil
+	}
+
+	catalogServices, err := app.fetchCatalogServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for key, svc := range catalogServices {
+		services[key] = svc
+	}
+
+	return services, nil
+}
+
 // fetchNomadServices retrieves all services from the Nomad API
 // and returns a map where of services where the key is the unique ID of the service.
 func (app *App) fetchNomadServices() (map[string]ServiceMeta, error) {
