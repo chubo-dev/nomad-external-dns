@@ -88,7 +88,7 @@ func filterOwnedRecords(records []libdns.Record, owner string) []string {
 func groupOwnedRecords(ownedRecords *map[string][]RecordMeta, records []libdns.Record, recordNames []string, zone string) {
 	for _, rec := range records {
 		if Contains(recordNames, rec.Name) {
-			dns := rec.Name
+			dns := EnsureFQDN(rec.Name + "." + strings.TrimSuffix(zone, "."))
 			rec.Name = strings.TrimSuffix(rec.Name, zone) // Overwrite to set a proper relative name before we delete.
 
 			// If an A record with the same name already exists, append the IP address to the existing record.
