@@ -41,6 +41,7 @@ func TestServiceMetaFromCatalogEntries(t *testing.T) {
 	require.Equal(t, "go-coffeeshop", meta.Job)
 	require.Equal(t, "coffeeshop.wizerd.dev", meta.DNSName)
 	require.ElementsMatch(t, []string{"172.26.64.10", "172.26.64.11"}, meta.Addresses)
+	require.False(t, meta.IsProxy)
 }
 
 func TestServiceMetaFromCatalogEntriesWithoutHostnameAnnotation(t *testing.T) {
@@ -55,4 +56,17 @@ func TestServiceMetaFromCatalogEntriesWithoutHostnameAnnotation(t *testing.T) {
 	})
 
 	require.Nil(t, meta)
+}
+
+func TestPreferExistingCatalogService(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, preferExistingCatalogService(
+		ServiceMeta{Name: "web-http", IsProxy: false},
+		ServiceMeta{Name: "web-http-sidecar-proxy", IsProxy: true},
+	))
+	require.False(t, preferExistingCatalogService(
+		ServiceMeta{Name: "web-http-sidecar-proxy", IsProxy: true},
+		ServiceMeta{Name: "web-http", IsProxy: false},
+	))
 }

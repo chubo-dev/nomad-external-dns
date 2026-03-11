@@ -21,7 +21,11 @@ func (app *App) fetchCatalogServices() (map[string]ServiceMeta, error) {
 			return nil, err
 		}
 		if svcMeta != nil {
-			services[EnsureFQDN(svcMeta.DNSName)] = *svcMeta
+			key := EnsureFQDN(svcMeta.DNSName)
+			if existing, ok := services[key]; ok && preferExistingCatalogService(existing, *svcMeta) {
+				continue
+			}
+			services[key] = *svcMeta
 		}
 	}
 
@@ -63,5 +67,14 @@ func serviceMetaFromCatalogEntries(serviceName string, entries []*consulapi.Cata
 		Tags:      tags,
 		Addresses: uniqueCatalogAddresses(entries),
 		DNSName:   getDNSNameFromTags(tags),
+		IsProxy:   isCatalogProxyService(entries[0]),
 	}
+}
+
+func isCatalogProxyService(entry *consulapi.CatalogService) bool {
+	return entry.ServiceProxy != nil && entry.ServiceProxy.DestinationServiceName != ""
+}
+
+func preferExistingCatalogService(existing, candidate ServiceMeta) bool {
+	return !existing.IsProxy && candidate.IsProxy
 }

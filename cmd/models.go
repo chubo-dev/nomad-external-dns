@@ -28,6 +28,7 @@ type ServiceMeta struct {
 	Addresses []string // Address of all backend services which is fetched by calling Nomad HTTP API.
 	Tags      []string // Tags in the given service.
 	DNSName   string   // DNS name of the service.
+	IsProxy   bool     // Whether the service represents a sidecar proxy registration.
 }
 
 // DNSProvider wraps the required libdns interfaces.
